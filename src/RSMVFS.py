@@ -42,10 +42,6 @@ class RSMVFSGlobal:
         self.y = y
         self.config = RSMVFConfig(**config)
 
-        # initialize matrix
-        self.Z = np.zeros(self.config.n, self.config.c) if Z_init is None else Z_init
-        self.U = np.zeros(self.config.n, self.config.c) if U_init is None else U_init
-
         # global variables
         self.d_i_list = [d.shape(1) for d in self.X]
         self.local_models = [
@@ -54,8 +50,29 @@ class RSMVFSGlobal:
         ]
         self.a_i_list = [1/self.config.v for _ in range(self.config.v)]
 
+        # initialize matrix
+        self.Z = np.zeros(self.config.n, self.config.c) if Z_init is None else Z_init
+        self.U = np.zeros(self.config.n, self.config.c) if U_init is None else U_init
+        self.F = None
+
+    def run(self):
+        converged = False
+
+
+        while not converged:
+            XW = np.mean([np.dot(m.X_i, m.W_i) for m in self.local_models])
+            U = np.mean()
+
+            for i, m in enumerate(self.local_models):
+                m.update_W(self.a_i_list[i], self.Z, XW, U)
+
+
     def update_F(self):
-        np.sum([a*m.X_i*m.W_i for a, m in zip(self.a_i_list, self.local_models)])
+        summation = np.sum([a*np.matmul(m.X_i, m.W_i) for a, m in zip(self.a_i_list, self.local_models)])
+        norm = (1/2)*np.linalg.norm(summation - self.y, axis=1)
+        norm = np.where(norm <= self.config.eps, norm, 0)
+        self.F = np.diag(1/norm)
+        return self.F
 
     def update_a_i(self):
         """ Must be called after updating W_i
@@ -66,7 +83,7 @@ class RSMVFSGlobal:
         total_W_norm = sum(W_norms)
         self.a_i_list = W_norms / total_W_norm
 
-    def update_Z(self, FF, y, XW_bar, U):
+    def update_Z(self):
         pass
 
 
@@ -84,16 +101,19 @@ class RSMVFSLocal:
         self.W_i = (10 **-3) * np.eye(dim, self.config.c) if W_init is None else W_init
         self.G_i = 1/(2*np.linalg.norm(self.W_i, ord=2, axis=1) + self.config.eps)
 
-    def update_W(self, a_i, Z_bar, XW_bar, U_bar):
-        S_b = a_i*self.X_i.T*self.y*np.linalg.inv(self.y.T*self.y)*self.y.T*self.X_i*a_i # eq 6
-        S_w = a_i*self.X_i.T*(np.identity(self.config.n) -
-                              self.y*np.linalg.inv(self.y.T*self.y)*self.y.T)*self.X_i*a_i # eq 7
+    def update_W(self, a_i, Z, XW_bar, U_bar):
+        S_b = (a_i**2)*np.linalg.multi_dot([self.X_i.T, self.y,
+                                            np.linalg.inv(self.y.T.dot(self.y)),self.y.T, self.X_i]) # eq 6
+        S_w = (a_i**2)*np.linalg.multi_dot([self.X_i.T,
+                                            (np.identity(self.config.n)
+                                             - np.dot(self.y, np.linalg.inv(self.y.T.dot(self.y)))),
+                                             self.y.T, self.X_i]) # eq 7
         S_i = (S_w - S_b)/(a_i**2)
 
         self.G_i = 1/(2*np.linalg.norm(self.W_i, ord=2, axis=1) + self.config.eps)
 
         term_1 = 2 * (self.config.lambda1 / a_i) * self.G_i + self.config.lo * (
                     np.matmul(self.X_i.transpose(), self.X_i) + self.config.lambda2 * S_i)
-        term_2 = (self.X_i.T * Z_bar + self.X_i.T * self.X_i * self.W_i - self.X_i.T * XW_bar - self.X_i.T * U_bar)
+        term_2 = (self.X_i.T * Z + self.X_i.T * self.X_i * self.W_i - self.X_i.T * XW_bar - self.X_i.T * U_bar)
 
         return np.linalg.inv(term_1) * term_2
