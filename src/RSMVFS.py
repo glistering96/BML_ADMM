@@ -3,7 +3,7 @@ import numpy as np
 
 class RSMVFConfig:
     def __init__(self, num_view, num_class, num_instances, num_total_features, lambda1, lambda2,
-                 eps=10^-6, converge_condition=10^-3, lo=1, lo_max=10^6):
+                 eps=10**-6, converge_condition=10**-3, lo=1, lo_max=10**6):
         """
         :param num_view: number of total view in the whole dataset
         :param num_class: number of target class
