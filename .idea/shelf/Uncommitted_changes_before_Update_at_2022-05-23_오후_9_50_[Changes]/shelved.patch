@@ -1,0 +1,8 @@
+Index: .gitignore
+===================================================================
+diff --git a/.gitignore b/.gitignore
+deleted file mode 100644
+--- a/.gitignore	(revision 5aef49915971bc09c2f78b46986a16db713ddb6f)
++++ /dev/null	(revision 5aef49915971bc09c2f78b46986a16db713ddb6f)
+@@ -1,1 +0,0 @@
+-/venv/
