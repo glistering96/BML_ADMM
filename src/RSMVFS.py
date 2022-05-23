@@ -119,15 +119,6 @@ class RSMVFSGlobal:
         return norm
 
 
-
-
-
-
-
-
-
-
-
 class RSMVFSLocal:
     """
     Responsible for calculating primal W_i
