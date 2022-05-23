@@ -24,7 +24,7 @@ def auto_calculate_configs(X, y):
     config = {"num_view": len(X),
     "num_instances" : y.shape[0],
     "num_class" : y.shape[1],
-    "num_total_features" : np.sum(x.shape[1] for x in X),
+    "num_total_features" : np.sum([x.shape[1] for x in X]),
     "lambda1" : 10**-2,
     "lambda2" : 10**-1
      }
@@ -35,4 +35,6 @@ def auto_calculate_configs(X, y):
 if __name__ == '__main__':
     X, y = setup_data(DATA_ROOT, X_i)
     config = auto_calculate_configs(X, y)
-    model = RSMVFConfig(X, y, **config)
+    model = RSMVFSGlobal(X, y, **config)
+
+    model.run()

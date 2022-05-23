@@ -45,25 +45,24 @@ class RSMVFSGlobal:
         self.config = RSMVFConfig(**config)
 
         # global variables
-        self.d_i_list = [d.shape(1) for d in self.X]
+        self.d_i_list = [d.shape[1] for d in self.X]
         self.local_models = [
-            RSMVFSLocal(self.X[i], self.d_i_list[i], **config)
-            for i in self.config.v
+            RSMVFSLocal(self.X[i], y, self.d_i_list[i], **config)
+            for i in range(self.config.v)
         ]
         self.a_i_list = [1/self.config.v for _ in range(self.config.v)]
-        self.prev_W = np.zeros(self.config.d, self.config.c)
+        self.prev_W = np.zeros((self.config.d, self.config.c))
 
         # initialize matrix
-        self.Z = np.zeros(self.config.n, self.config.c) if Z_init is None else Z_init
-        self.U = np.zeros(self.config.n, self.config.c) if U_init is None else U_init
-        self.F = np.zeros(self.config.n, self.config.n) if F_init is None else F_init
+        self.Z = np.zeros((self.config.n, self.config.c)) if Z_init is None else Z_init
+        self.U = np.zeros((self.config.n, self.config.c)) if U_init is None else U_init
+        self.F = np.zeros((self.config.n, self.config.n)) if F_init is None else F_init
         self.U = np.zeros((self.config.n, self.config.c))
 
     def run(self):
-        converged = False
         error = float('inf')
 
-        while error < self.config.eps:
+        while error > self.config.eps:
             XW = np.mean([np.dot(m.X_i, m.W_i) for m in self.local_models])
 
             for i, m in enumerate(self.local_models):
