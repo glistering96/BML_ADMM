@@ -63,7 +63,7 @@ class RSMVFSGlobal:
         error = float('inf')
 
         while error > self.config.eps:
-            XW = np.mean([np.dot(m.X_i, m.W_i) for m in self.local_models])
+            XW = np.mean([np.dot(m.X_i, m.W_i) for m in self.local_models], axis=0)
 
             for i, m in enumerate(self.local_models):
                 m.update_W(self.a_i_list[i], self.Z, XW, self.U)
@@ -141,19 +141,25 @@ class RSMVFSLocal:
         self.G_i = 1/(2*np.linalg.norm(self.W_i, ord=2, axis=1) + self.config.eps)
 
         term_1 = 2 * (self.config.lambda1 / a_i) * self.G_i + self.config.lo * (
-                    np.matmul(self.X_i.transpose(), self.X_i) + self.config.lambda2 * S_i)
-        term_2 = (self.X_i.T * Z + self.X_i.T * self.X_i * self.W_i - self.X_i.T * XW - self.X_i.T * U)
+                    np.dot(self.X_i.transpose(), self.X_i) + self.config.lambda2 * S_i)
+        term_2 = (
+                np.dot(self.X_i.T, Z)
+                + np.linalg.multi_dot([self.X_i.T, self.X_i, self.W_i])
+                - np.dot(self.X_i.T, XW)
+                - np.dot(self.X_i.T, U)
+        )
 
-        self.W_i = np.linalg.inv(term_1) * term_2
+        self.W_i = np.dot(np.linalg.inv(term_1), term_2)
         return self.W_i
 
     def _update_S_i(self, a_i):
+        yTy_inv = np.linalg.inv(np.dot(self.y.T, self.y))
         S_b = (a_i ** 2) * np.linalg.multi_dot([self.X_i.T, self.y,
-                                                np.linalg.inv(self.y.T.dot(self.y)), self.y.T, self.X_i])  # eq 6
+                                                yTy_inv, self.y.T, self.X_i])  # eq 6
         S_w = (a_i ** 2) * np.linalg.multi_dot([self.X_i.T,
                                                 (np.identity(self.config.n)
-                                                 - np.dot(self.y, np.linalg.inv(self.y.T.dot(self.y)))),
-                                                self.y.T, self.X_i])  # eq 7
+                                                 - np.linalg.multi_dot([self.y, yTy_inv, self.y.T])),
+                                                self.X_i])  # eq 7
         S_i = (S_w - S_b) / (a_i ** 2)
         self.S_i = S_i
         return S_i
