@@ -29,6 +29,7 @@ class Model:
         return np.diag(diag)
 
     def update_W(self, W):
+        pass
 
     def run(self, eps=10**-6):
         # calculate G_i for all W_i

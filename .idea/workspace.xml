@@ -4,14 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="53a3120f-5b99-4065-a6b0-d2dbd7f2e754" name="Changes" comment="S_i modified to calculate once">
-      <change afterPath="$PROJECT_DIR$/src/RSMVFS_v2.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/run_v2.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/BML_ADMM.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/BML_ADMM.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/RSMVFS.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/RSMVFS.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/run.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/run.py" afterDir="false" />
+    <list default="true" id="53a3120f-5b99-4065-a6b0-d2dbd7f2e754" name="Changes" comment="version 2 added">
+      <change beforePath="$PROJECT_DIR$/src/RSMVFS_v2.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/RSMVFS_v2.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -175,7 +169,14 @@
       <option name="project" value="LOCAL" />
       <updated>1653381079754</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="version 2 added">
+      <created>1653402255899</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1653402255899</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -212,7 +213,8 @@
     <MESSAGE value="gitignore updated" />
     <MESSAGE value="fixed various equations" />
     <MESSAGE value="S_i modified to calculate once" />
-    <option name="LAST_COMMIT_MESSAGE" value="S_i modified to calculate once" />
+    <MESSAGE value="version 2 added" />
+    <option name="LAST_COMMIT_MESSAGE" value="version 2 added" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
