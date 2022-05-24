@@ -47,9 +47,10 @@ class RSMVFSGlobal:
         # global variables
         self.d_i_list = [d.shape[1] for d in self.X]
         self.local_models = [
-            RSMVFSLocal(self.X[i], y, self.d_i_list[i], **config)
+            RSMVFSLocal(self.X[i], y, self.d_i_list[i],  **config)
             for i in range(self.config.v)
         ]
+        # W_init=self._xavier_init(self.X[i].shape[1], y.shape[1]),
         self.a_i_list = [1/self.config.v for _ in range(self.config.v)]
         self.prev_W = np.zeros((self.config.d, self.config.c))
 
@@ -59,11 +60,17 @@ class RSMVFSGlobal:
         self.F = np.zeros((self.config.n, self.config.n)) if F_init is None else F_init
         self.U = np.zeros((self.config.n, self.config.c))
 
+    def _xavier_init(self, n, c):
+        scale = 1 / max(1., (2 + 2) / 2.)
+        limit = np.sqrt(3.0 * scale)
+        weights = np.random.uniform(-limit, limit, size=(n, c))
+        return weights
+
     def run(self):
         error = float('inf')
         iter = 0
 
-        while error > self.config.eps:
+        while error > self.config.converge_condition:
             iter += 1
             XW = np.mean([np.dot(m.X_i, m.W_i) for m in self.local_models], axis=0)
 
@@ -76,17 +83,21 @@ class RSMVFSGlobal:
             U = self._update_U(self.U, XW, Z)
 
             error, W_norm = self._update_error()
+            Z_norm = np.linalg.norm(Z)
+            U_norm = np.linalg.norm(U)
+
             self.config.lo = min(1.1*self.config.lo, self.config.lo_max)
 
-            print(f"Iter {iter}: norm of W: {W_norm}, a: {self.a_i_list}")
+            print(f"Iter {iter}: norm of W: {W_norm}, norm of Z: {Z_norm}, norm of U: {U_norm}, a: {self.a_i_list}")
 
         return [np.dot(m.X_i, m.W_i) for m in self.local_models]
 
     def _update_F(self, local_models, y):
         summation = np.sum([np.dot(self.X[i], m.W_i) for i, m in enumerate(local_models)], axis=0)
-        norm = (1/2)*np.linalg.norm(summation - y, axis=1)
-        norm = np.where(norm <= self.config.eps, norm, 0)
-        self.F = np.diag(1/(norm + self.config.eps))
+        norm = np.linalg.norm((summation - y), axis=1)
+        threshold = 0.001
+        norm = np.where(norm <= threshold, norm, self.config.eps)
+        self.F = np.diag(1/2 * norm**-1)
         return self.F
 
     def _update_a_i(self, local_models):
@@ -120,7 +131,7 @@ class RSMVFSGlobal:
         W = np.concatenate([m.W_i for m in self.local_models], axis=0) # equals to np.vstack, current W
 
         # TODO: Meaning of || W ||_F ?
-        error_norm = np.linalg.norm(W - self.prev_W)**2
+        error_norm = np.linalg.norm(W - self.prev_W, ord='fro')**2
         self.prev_W = W
         return error_norm, np.linalg.norm(W)
 
@@ -132,29 +143,39 @@ class RSMVFSLocal:
     def __init__(self, X_i, y, dim, W_init=None, **config):
         # fixed
         self.config = RSMVFConfig(**config)
-        self.X_i = X_i
-        self.y = y
+        self.X_i = X_i # (n, di)
+        self.y = y # (n, c)
+        self.X_T_X = np.dot(X_i.T, X_i)
+
+        self.yTy_inv = np.linalg.inv(np.dot(self.y.T, self.y))
+        self.y_chunk = np.linalg.multi_dot([self.y, self.yTy_inv, self.y.T])
+
+        self.S_b = np.linalg.multi_dot([self.X_i.T, self.y_chunk, self.X_i])
+        self.I_y = np.identity(self.config.n) - self.y_chunk
+        self.S_w = np.linalg.multi_dot([self.X_i.T, self.I_y, self.X_i])
+        self.S_i = self.S_w - self.S_b
 
         # learnable
-        self.W_i = (10 **-3) * np.eye(dim, self.config.c) if W_init is None else W_init # W_i
-        self.G_i = 1/(2*np.linalg.norm(self.W_i, ord=2, axis=1) + self.config.eps)
-
-        # calculated
-        self.S_i = None
+        self.W_i = (10 **-3) * np.eye(dim, self.config.c) if W_init is None else W_init # (n, c)
+        self.G_i = None # (n, n)
 
     def update_W(self, a_i, Z, XW, U):
         # equation 23
         l1, l2, lo = self.config.lambda1, self.config.lambda2, self.config.lo
-        S_i = self._update_S_i(a_i)
+        # S_i = self._update_S_i(a_i)
+        S_i = self.S_i
         X_i = self.X_i
         W_i = self.W_i
 
-        X_T_X = np.dot(X_i.T, X_i)
+        c = self.config.c
+        di = X_i.shape[1]
 
-        diag_elem = 1/(2*np.linalg.norm(W_i, ord=2, axis=1) + self.config.eps)
-        G_i = np.diag(diag_elem)
+        # TODO: G_i의 매트릭스 shape이 어떻게 되먹은건가. 논문에서는 c X c라 되어 있는데 그러면 계산이 안됨.
+        G_i = np.zeros((di, di))
+        diag_elem = 1/(2*np.linalg.norm(W_i[:c], ord=2, axis=1))
+        np.fill_diagonal(G_i, diag_elem)
 
-        term_1 = (2 * l1 / a_i) * G_i + lo * X_T_X + l2 * S_i
+        term_1 = (2 * l1 / a_i) * G_i + lo * self.X_T_X + l2 * S_i
 
         term_2 = (
                 np.dot(X_i.T, Z)
@@ -174,13 +195,13 @@ class RSMVFSLocal:
         return W_i
 
     def _update_S_i(self, a_i):
-        yTy_inv = np.linalg.inv(np.dot(self.y.T, self.y))
-        y_chunk = np.linalg.multi_dot([self.y, yTy_inv, self.y.T])
-
-        S_b = (a_i ** 2) * np.linalg.multi_dot([self.X_i.T, y_chunk, self.X_i])  # eq 6
-        I_y = np.identity(self.config.n) - y_chunk
+        S_b = (a_i ** 2) * np.linalg.multi_dot([self.X_i.T, self.y_chunk, self.X_i])  # eq 6
+        I_y = np.identity(self.config.n) - self.y_chunk
 
         S_w = (a_i ** 2) * np.linalg.multi_dot([self.X_i.T, I_y, self.X_i])  # eq 7
         S_i = (S_w - S_b) / (a_i ** 2)
+
+        s_b = np.linalg.multi_dot([self.X_i.T, self.y_chunk, self.X_i])
+        s_w = np.linalg.multi_dot([self.X_i.T, I_y, self.X_i])
         self.S_i = S_i # eq10
         return S_i
