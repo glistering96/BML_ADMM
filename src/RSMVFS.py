@@ -75,8 +75,6 @@ class RSMVFSGlobal:
         self.prev_U = np.copy(self.U)
         self.prev_F = np.copy(self.F)
 
-
-
     def _xavier_init(self, n, c):
         scale = 1 / max(1., (2 + 2) / 2.)
         limit = np.sqrt(3.0 * scale)
@@ -107,16 +105,16 @@ class RSMVFSGlobal:
 
             print(f"Iter {iter}: norm of W: {e_W}, norm of Z: {e_Z}, norm of U: {e_U}, norm of F: {e_F}, a: {self.a_i_list}")
 
-        return [np.dot(m.X_i, m.W_i) for m in self.local_models]
+        return [m.W_i for m in self.local_models]
 
     def _update_F(self, local_models, y):
         # X dot W_i for every view and sum up
-        summation = np.sum([np.dot(self.X[i], m.W_i) for i, m in enumerate(local_models)], axis=0)
+        summation = np.sum([np.dot(m.X_i, m.W_i) for i, m in enumerate(local_models)], axis=0)
 
         # summation - y
         norm = np.linalg.norm((summation - y), ord=2, axis=1)
         threshold = 10**6
-        norm = np.where(norm <= threshold, norm, self.config.eps)
+        # norm = np.where(norm <= threshold, norm, self.config.eps)
         self.F = np.diag(0.5 * norm**-1)
         return self.F
 
@@ -124,11 +122,12 @@ class RSMVFSGlobal:
         """ Must be called after updating W_i
             works as inplace method
          """
-        W_norms = [np.sqrt(
-            np.trace(np.linalg.multi_dot([m.W_i.T, m.G_i, m.W_i])) + self.config.eps)
+        W_norms = [
+            np.sqrt(
+            np.trace(np.linalg.multi_dot([m.W_i.T, m.G_i, m.W_i])))
             for m in local_models
         ] # Between eq. 19 and 20
-        total_W_norm = np.sum(W_norms)
+        total_W_norm = np.sum(W_norms) + self.config.eps
 
         self.a_i_list = W_norms / total_W_norm
         return self.a_i_list
@@ -181,18 +180,16 @@ class RSMVFSLocal:
         self.yTy_inv = np.linalg.inv(np.dot(self.y.T, self.y))
         self.y_chunk = np.linalg.multi_dot([self.y, self.yTy_inv, self.y.T])
 
-        self.S_b = np.linalg.multi_dot([self.X_i.T, self.y_chunk, self.X_i])
-        self.I_y = np.identity(self.config.n) - self.y_chunk
-        self.S_w = np.linalg.multi_dot([self.X_i.T, self.I_y, self.X_i])
-        self.S_i = self.S_w - self.S_b # independent of a_i
+        self.S_i = self._calculate_S()
 
         # learnable
-        self.W_i = (10 **-3) * np.eye(di, self.config.c) if W_init is None else W_init # (di, c)
-        self.G_i = None # (n, n)
+        # self.W_i = (10 **-3) * np.eye(di, self.config.c) if W_init is None else W_init # (di, c)
+        self.W_i = (10 ** -6) * np.eye(di, self.config.c) if W_init is None else W_init  # (di, c)
+        self.G_i = None # (di, di)
 
     def compute_G(self, W_i):
         # TODO: G_i의 매트릭스 shape이 어떻게 되먹은건가. 논문에서는 c X c라 되어 있는데 그러면 계산이 안됨.
-        diag_elem = 1 / (np.linalg.norm(W_i, ord=2, axis=1) + 10**-10)
+        diag_elem = 1 / (np.linalg.norm(W_i, ord=2, axis=1) + 10**-6)
         G_i = np.diag(diag_elem) # (di, di)
         return G_i
 
@@ -222,14 +219,10 @@ class RSMVFSLocal:
         self.W_i = W_i
         return W_i
 
-    # def _update_S_i(self, a_i):
-    #     S_b = (a_i ** 2) * np.linalg.multi_dot([self.X_i.T, self.y_chunk, self.X_i])  # eq 6
-    #     I_y = np.identity(self.config.n) - self.y_chunk
-    #
-    #     S_w = (a_i ** 2) * np.linalg.multi_dot([self.X_i.T, I_y, self.X_i])  # eq 7
-    #     S_i = (S_w - S_b) / (a_i ** 2)
-    #
-    #     s_b = np.linalg.multi_dot([self.X_i.T, self.y_chunk, self.X_i])
-    #     s_w = np.linalg.multi_dot([self.X_i.T, I_y, self.X_i])
-    #     self.S_i = S_i # eq10
-    #     return S_i
+    def _calculate_S(self):
+        S_b = np.linalg.multi_dot([self.X_i.T, self.y_chunk, self.X_i])  # eq 6
+        I_y = np.identity(self.config.n) - self.y_chunk
+
+        S_w = np.linalg.multi_dot([self.X_i.T, I_y, self.X_i])  # eq 7
+        S_i = S_w - S_b # independent of a_i
+        return S_i

@@ -1,5 +1,6 @@
-from RSMVFS import *
+from RSMVFS_v2 import Model
 import pandas as pd
+import numpy as np
 
 DATA_ROOT = "../data/mfeat/"
 X_i = {"mfeat-" + x: None for x in ["fou", "fac", "kar", "mor", "pix", "zer"]}
@@ -47,7 +48,19 @@ def debugger_is_active() -> bool:
 
 if __name__ == '__main__':
     X, y = setup_data(DATA_ROOT, X_i)
-    config = auto_calculate_configs(X, y)
-    model = RSMVFSGlobal(X, y, **config)
+    n = y.shape[0]
+    c = y.shape[1]
+    v = len(X)
 
-    model.run()
+    l1 = 10**-2
+    l2 = 10**-1
+
+    di = [x.shape[1] for x in X]
+    W = [(10**-3)*np.eye(n, x.shape[1]) for x in X]
+    a = [1/v for _ in X]
+    Z = np.zeros((n, c))
+    U = np.zeros((n, c))
+    F = np.zeros((n, n))
+
+    model = Model(X, y, Z, U, F)
+    run_model(X[0], y, W[0], Z, U, F, a[0], l1, l2)
