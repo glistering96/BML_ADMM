@@ -61,35 +61,42 @@ class RSMVFSGlobal:
 
     def run(self):
         error = float('inf')
+        iter = 0
 
         while error > self.config.eps:
+            iter += 1
             XW = np.mean([np.dot(m.X_i, m.W_i) for m in self.local_models], axis=0)
 
             for i, m in enumerate(self.local_models):
                 m.update_W(self.a_i_list[i], self.Z, XW, self.U)
 
+            self._update_a_i(self.local_models)
             F = self._update_F(self.local_models, self.y)
             Z = self._update_Z(F, self.y, XW, self.U)
             U = self._update_U(self.U, XW, Z)
 
-            error = self._update_error()
+            error, W_norm = self._update_error()
             self.config.lo = min(1.1*self.config.lo, self.config.lo_max)
+
+            print(f"Iter {iter}: norm of W: {W_norm}, a: {self.a_i_list}")
 
         return [np.dot(m.X_i, m.W_i) for m in self.local_models]
 
     def _update_F(self, local_models, y):
-        summation = np.sum([np.dot(self.X[i], m) for i, m in enumerate(local_models)], axis=1)
+        summation = np.sum([np.dot(self.X[i], m.W_i) for i, m in enumerate(local_models)], axis=0)
         norm = (1/2)*np.linalg.norm(summation - y, axis=1)
         norm = np.where(norm <= self.config.eps, norm, 0)
-        self.F = np.diag(1/norm)
+        self.F = np.diag(1/(norm + self.config.eps))
         return self.F
 
     def _update_a_i(self, local_models):
         """ Must be called after updating W_i
             works as inplace method
          """
-        W_norms = np.array([np.sqrt(np.linalg.norm(model.W_i, ord=2, axis=1) + self.config.eps)
-                            for model in local_models])
+        W_norms = [np.sqrt(
+            np.trace(np.linalg.multi_dot([m.W_i.T, m.G_i, m.W_i])) + self.config.eps)
+            for m in local_models
+        ] # Between eq. 19 and 20
         total_W_norm = np.sum(W_norms)
 
         self.a_i_list = W_norms / total_W_norm
@@ -99,7 +106,7 @@ class RSMVFSGlobal:
         v = self.config.v
         lo = self.config.lo
 
-        term1 = np.inv(2*v*F+lo*np.identity(F.shape[0]))
+        term1 = np.linalg.inv(2*v*F+lo*np.identity(F.shape[0]))
         term2 = 2*v*np.dot(F, y + lo*XW + lo*U)
 
         self.Z = np.dot(term1, term2)
@@ -110,12 +117,12 @@ class RSMVFSGlobal:
         return self.U
 
     def _update_error(self):
-        W = np.concatenate([m.W_i for m in self.local_models], axis=0) # equals to np.vstack
+        W = np.concatenate([m.W_i for m in self.local_models], axis=0) # equals to np.vstack, current W
 
         # TODO: Meaning of || W ||_F ?
-        norm = np.linalg.norm(W - self.prev_W)**2
+        error_norm = np.linalg.norm(W - self.prev_W)**2
         self.prev_W = W
-        return norm
+        return error_norm, np.linalg.norm(W)
 
 
 class RSMVFSLocal:
@@ -136,30 +143,44 @@ class RSMVFSLocal:
         self.S_i = None
 
     def update_W(self, a_i, Z, XW, U):
+        # equation 23
+        l1, l2, lo = self.config.lambda1, self.config.lambda2, self.config.lo
         S_i = self._update_S_i(a_i)
+        X_i = self.X_i
+        W_i = self.W_i
 
-        self.G_i = 1/(2*np.linalg.norm(self.W_i, ord=2, axis=1) + self.config.eps)
+        X_T_X = np.dot(X_i.T, X_i)
 
-        term_1 = 2 * (self.config.lambda1 / a_i) * self.G_i + self.config.lo * (
-                    np.dot(self.X_i.transpose(), self.X_i) + self.config.lambda2 * S_i)
+        diag_elem = 1/(2*np.linalg.norm(W_i, ord=2, axis=1) + self.config.eps)
+        G_i = np.diag(diag_elem)
+
+        term_1 = (2 * l1 / a_i) * G_i + lo * X_T_X + l2 * S_i
+
         term_2 = (
-                np.dot(self.X_i.T, Z)
-                + np.linalg.multi_dot([self.X_i.T, self.X_i, self.W_i])
-                - np.dot(self.X_i.T, XW)
-                - np.dot(self.X_i.T, U)
+                np.dot(X_i.T, Z)
+                + np.linalg.multi_dot([X_i.T, X_i, W_i])
+                - np.dot(X_i.T, XW)
+                - np.dot(X_i.T, U)
         )
 
-        self.W_i = np.dot(np.linalg.inv(term_1), term_2)
-        return self.W_i
+        try:
+            W_i = lo * np.dot(np.linalg.inv(term_1), term_2)
+
+        except np.linalg.LinAlgError:
+            W_i = lo * np.dot(np.linalg.pinv(term_1), term_2)
+
+        self.G_i = G_i
+        self.W_i = W_i
+        return W_i
 
     def _update_S_i(self, a_i):
         yTy_inv = np.linalg.inv(np.dot(self.y.T, self.y))
-        S_b = (a_i ** 2) * np.linalg.multi_dot([self.X_i.T, self.y,
-                                                yTy_inv, self.y.T, self.X_i])  # eq 6
-        S_w = (a_i ** 2) * np.linalg.multi_dot([self.X_i.T,
-                                                (np.identity(self.config.n)
-                                                 - np.linalg.multi_dot([self.y, yTy_inv, self.y.T])),
-                                                self.X_i])  # eq 7
+        y_chunk = np.linalg.multi_dot([self.y, yTy_inv, self.y.T])
+
+        S_b = (a_i ** 2) * np.linalg.multi_dot([self.X_i.T, y_chunk, self.X_i])  # eq 6
+        I_y = np.identity(self.config.n) - y_chunk
+
+        S_w = (a_i ** 2) * np.linalg.multi_dot([self.X_i.T, I_y, self.X_i])  # eq 7
         S_i = (S_w - S_b) / (a_i ** 2)
-        self.S_i = S_i
+        self.S_i = S_i # eq10
         return S_i
