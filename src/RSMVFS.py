@@ -38,6 +38,8 @@ class RSMVFSGlobal:
         :param U_init: initial value of U
         :param F_init: initial value of F
 
+        If initial value is None, initialize with given paper value
+
         """
 
         self.X = X # list of view matrix
@@ -45,20 +47,28 @@ class RSMVFSGlobal:
         self.config = RSMVFConfig(**config)
 
         # global variables
+
+        # number of features of each view
         self.d_i_list = [d.shape[1] for d in self.X]
+
+        # local models list
         self.local_models = [
             RSMVFSLocal(self.X[i], y, self.d_i_list[i],  **config)
             for i in range(self.config.v)
         ]
+
         # W_init=self._xavier_init(self.X[i].shape[1], y.shape[1]),
+
+        # a_i, the importance scalar for each view
         self.a_i_list = [1/self.config.v for _ in range(self.config.v)]
+        #
         self.prev_W = np.zeros((self.config.d, self.config.c))
 
         # initialize matrix
-        self.Z = np.zeros((self.config.n, self.config.c)) if Z_init is None else Z_init
-        self.U = np.zeros((self.config.n, self.config.c)) if U_init is None else U_init
-        self.F = np.zeros((self.config.n, self.config.n)) if F_init is None else F_init
-        self.U = np.zeros((self.config.n, self.config.c))
+        self.Z = np.zeros((self.config.n, self.config.c)) if Z_init is None else Z_init # (n, c)
+        self.U = np.zeros((self.config.n, self.config.c)) if U_init is None else U_init # (n, c)
+        self.F = np.zeros((self.config.n, self.config.n)) if F_init is None else F_init # (n, n)
+        self.U = np.zeros((self.config.n, self.config.c)) # (n, c)
 
     def _xavier_init(self, n, c):
         scale = 1 / max(1., (2 + 2) / 2.)
@@ -159,6 +169,16 @@ class RSMVFSLocal:
         self.W_i = (10 **-3) * np.eye(dim, self.config.c) if W_init is None else W_init # (n, c)
         self.G_i = None # (n, n)
 
+    def compute_G(self, W_i, c, di):
+        # TODO: G_i의 매트릭스 shape이 어떻게 되먹은건가. 논문에서는 c X c라 되어 있는데 그러면 계산이 안됨.
+        G_i = np.zeros((di, di))
+        diag_elem = 1 / (np.linalg.norm(W_i[:c], ord=2, axis=1) + self.config.eps)
+
+        for i, v in enumerate(diag_elem):
+            G_i[i, i] = v
+
+        return G_i
+
     def update_W(self, a_i, Z, XW, U):
         # equation 23
         l1, l2, lo = self.config.lambda1, self.config.lambda2, self.config.lo
@@ -170,10 +190,7 @@ class RSMVFSLocal:
         c = self.config.c
         di = X_i.shape[1]
 
-        # TODO: G_i의 매트릭스 shape이 어떻게 되먹은건가. 논문에서는 c X c라 되어 있는데 그러면 계산이 안됨.
-        G_i = np.zeros((di, di))
-        diag_elem = 1/(2*np.linalg.norm(W_i[:c], ord=2, axis=1))
-        np.fill_diagonal(G_i, diag_elem)
+        G_i = self.compute_G(W_i, c, di) # first line in Algorithm 1.
 
         term_1 = (2 * l1 / a_i) * G_i + lo * self.X_T_X + l2 * S_i
 
