@@ -56,11 +56,11 @@ if __name__ == '__main__':
     l2 = 10**-1
 
     di = [x.shape[1] for x in X]
-    W = [(10**-3)*np.eye(n, x.shape[1]) for x in X]
+    W = [(10**-3)*np.eye(x.shape[1], y.shape[1]) for x in X]
     a = [1/v for _ in X]
     Z = np.zeros((n, c))
     U = np.zeros((n, c))
     F = np.zeros((n, n))
 
-    model = Model(X, y, Z, U, F)
-    run_model(X[0], y, W[0], Z, U, F, a[0], l1, l2)
+    model = Model(X, y, Z, U, F, W, l1=l1, l2=l2)
+    model.run()
