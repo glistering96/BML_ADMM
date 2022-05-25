@@ -1,4 +1,4 @@
-from RSMVFS_v2 import Model
+from RSMVFS_v2 import RSMVFS
 import pandas as pd
 import numpy as np
 
@@ -62,5 +62,5 @@ if __name__ == '__main__':
     U = np.zeros((n, c))
     F = np.zeros((n, n))
 
-    model = Model(X, y, Z, U, F, W, l1=l1, l2=l2)
+    model = RSMVFS(X, y, Z, U, F, W, l1=l1, l2=l2)
     model.run()
