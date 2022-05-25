@@ -8,7 +8,7 @@ INV = np.linalg.inv
 class RSMVFS:
     def __init__(self, X, Y, Z, U, F, W,
                  lo=1, l1=10**-3, l2=10**-3, eps=10**-6, lo_max=10**6, eps_0=10**-3,
-                 num_process=1):
+                 verbose=True):
         self.X = X  # list of view matrix, [X1, X2, ..., Xv], Xv: [n, di]
         self.Y = Y  # [n, c]
         self.Z = Z  # [n, c]
@@ -21,6 +21,7 @@ class RSMVFS:
         self.eps = eps  # eps
         self.eps_0 = eps_0  # convergence threshold
         self.lo_max = lo_max    # maximum lo
+        self.verbose = verbose
 
         # fixed values
         self.yTy = np.dot(Y.T, Y)
@@ -32,10 +33,6 @@ class RSMVFS:
         self.n = Y.shape[0] # number of instances
         self.c = Y.shape[1] # number of class
         self.d = [x.shape[1] for x in X]    # [d1, d2, ..., dv]
-
-        if num_process > 1:
-            self.num_process = num_process
-
 
     def calculate_a(self, W: list, G):
         a = [
@@ -81,7 +78,7 @@ class RSMVFS:
         return W_next
 
     def calculate_Z(self, F, Y, XW, U):
-        term1 = 2*self.v*F + self.lo*np.identity(self.n)
+        term1 = 2*self.v*F + self.lo*np.identity(self.n) # inverse of n x n matrix takes very long
         term2 = 2*self.v*np.dot(F, Y) + self.lo*XW + self.lo*U
         Z_next = np.dot(INV(term1), term2)
         return Z_next
@@ -138,4 +135,5 @@ class RSMVFS:
 
             i += 1
 
-            print(f"[Iter {i:>3}] Error: {error}")
+            if self.verbose:
+                print(f"[Iter {i:>3}] Error: {error}")

@@ -1,4 +1,5 @@
 from RSMVFS_v2 import RSMVFS
+from RSMVFS_parallel import RSMVFS_multiprocess
 import pandas as pd
 import numpy as np
 
@@ -47,6 +48,8 @@ def debugger_is_active() -> bool:
     return gettrace() is not None
 
 if __name__ == '__main__':
+    import time
+
     X, y = setup_data(DATA_ROOT, X_i)
     n = y.shape[0]
     c = y.shape[1]
@@ -62,5 +65,12 @@ if __name__ == '__main__':
     U = np.zeros((n, c))
     F = np.zeros((n, n))
 
-    model = RSMVFS(X, y, Z, U, F, W, l1=l1, l2=l2)
+    # model = RSMVFS(X, y, Z, U, F, W, l1=l1, l2=l2, verbose=False)
+    # start = time.time()
+    # model.run()
+    # print(time.time()-start)
+
+    model = RSMVFS_multiprocess(X, y, Z, U, F, W, l1=l1, l2=l2, num_process=6, verbose=False)
+    start = time.time()
     model.run()
+    print(time.time()-start)

@@ -1,14 +1,23 @@
 import copy
 import numpy as np
-from multiprocessing import Pool
+from joblib import Parallel, delayed
 
 INV = np.linalg.inv
 
+"""
 
-class RSMVFS:
+Considering the computational complexity of each method, 
+
+parallelize update W first
+
+then consider a
+
+"""
+
+class RSMVFS_multiprocess:
     def __init__(self, X, Y, Z, U, F, W,
                  lo=1, l1=10**-3, l2=10**-3, eps=10**-6, lo_max=10**6, eps_0=10**-3,
-                 num_process=1):
+                 num_process=1, verbose=True):
         self.X = X  # list of view matrix, [X1, X2, ..., Xv], Xv: [n, di]
         self.Y = Y  # [n, c]
         self.Z = Z  # [n, c]
@@ -21,6 +30,7 @@ class RSMVFS:
         self.eps = eps  # eps
         self.eps_0 = eps_0  # convergence threshold
         self.lo_max = lo_max    # maximum lo
+        self.verbose = verbose
 
         # fixed values
         self.yTy = np.dot(Y.T, Y)
@@ -35,7 +45,6 @@ class RSMVFS:
 
         if num_process > 1:
             self.num_process = num_process
-
 
     def calculate_a(self, W: list, G):
         a = [
@@ -116,8 +125,8 @@ class RSMVFS:
             a = self.calculate_a(W, G)  # can be parallelized
 
             # update W_i
-            W = [self.calculate_W_i(X_i, W_i, S_i, G_i, a_i, Z, XW, U)
-                 for X_i, W_i, S_i, G_i, a_i in zip(self.X, W, self.S, G, a)]   # can be parallelized
+            W = Parallel(n_jobs=self.num_process)(delayed(self.calculate_W_i)(X_i, W_i, S_i, G_i, a_i, Z, XW, U)
+                 for X_i, W_i, S_i, G_i, a_i in zip(self.X, W, self.S, G, a))   # can be parallelized
 
             # update XW
             XW = self.calculate_XW(self.X, W) # XW_(k+1)
@@ -138,4 +147,5 @@ class RSMVFS:
 
             i += 1
 
-            print(f"[Iter {i:>3}] Error: {error}")
+            if self.verbose:
+                print(f"[Iter {i:>3}] Error: {error: .4}")

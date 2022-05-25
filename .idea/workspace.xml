@@ -4,9 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="53a3120f-5b99-4065-a6b0-d2dbd7f2e754" name="Changes" comment="v2 fixed">
-      <change afterPath="$PROJECT_DIR$/src/RSMVFS_parallel.py" afterDir="false" />
+    <list default="true" id="53a3120f-5b99-4065-a6b0-d2dbd7f2e754" name="Changes" comment="start on parallel version">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/RSMVFS_parallel.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/RSMVFS_parallel.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/RSMVFS_v2.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/RSMVFS_v2.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/run_v2.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/run_v2.py" afterDir="false" />
     </list>
@@ -186,7 +186,14 @@
       <option name="project" value="LOCAL" />
       <updated>1653448578495</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="start on parallel version">
+      <created>1653449168643</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1653449168643</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -224,7 +231,8 @@
     <MESSAGE value="S_i modified to calculate once" />
     <MESSAGE value="version 2 added" />
     <MESSAGE value="v2 fixed" />
-    <option name="LAST_COMMIT_MESSAGE" value="v2 fixed" />
+    <MESSAGE value="start on parallel version" />
+    <option name="LAST_COMMIT_MESSAGE" value="start on parallel version" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -254,7 +262,7 @@
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/BML_ADMM$run.coverage" NAME="run 커버리지 결과" MODIFIED="1653448149370" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
-    <SUITE FILE_PATH="coverage/BML_ADMM$run_v2.coverage" NAME="run_v2 커버리지 결과" MODIFIED="1653448516020" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
+    <SUITE FILE_PATH="coverage/BML_ADMM$run_v2.coverage" NAME="run_v2 커버리지 결과" MODIFIED="1653449206449" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
     <SUITE FILE_PATH="coverage/BML_ADMM$RSMVFS.coverage" NAME="RSMVFS 커버리지 결과" MODIFIED="1653369698033" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
   </component>
 </project>
