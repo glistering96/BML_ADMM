@@ -1,6 +1,7 @@
 import copy
+import multiprocessing
+
 import numpy as np
-from joblib import Parallel, delayed
 
 INV = np.linalg.inv
 
@@ -44,6 +45,7 @@ class RSMVFS_multiprocess:
         self.d = [x.shape[1] for x in X]    # [d1, d2, ..., dv]
 
         if num_process > 1:
+            print(f"Distributed learning with {num_process} processes")
             self.num_process = num_process
 
     def calculate_a(self, W: list, G):
@@ -64,8 +66,9 @@ class RSMVFS_multiprocess:
         term = summation - Y
         norm = np.linalg.norm(term, axis=1) # calculate norm of each row
 
-        norm = np.where(norm <= self.eps, norm, 10**-6) # loss capping process.
-        F = 0.5 * (1/np.diag(norm))
+        off_indicies = np.where(norm > self.eps)
+        F = np.diag(0.5 * (1 / norm))
+        F[off_indicies, off_indicies] = 0
         return F
 
     def calculate_G_i(self, W_i, eps):
@@ -117,6 +120,8 @@ class RSMVFS_multiprocess:
         error = float('inf')
         i = 0
 
+        MP_POOL = multiprocessing.Pool(self.num_process)
+
         while error > self.eps_0:
             # calculate G_i for all W_i
             G = [self.calculate_G_i(W_i, eps) for W_i in W]     # can be parallelized
@@ -125,8 +130,12 @@ class RSMVFS_multiprocess:
             a = self.calculate_a(W, G)  # can be parallelized
 
             # update W_i
-            W = Parallel(n_jobs=self.num_process)(delayed(self.calculate_W_i)(X_i, W_i, S_i, G_i, a_i, Z, XW, U)
-                 for X_i, W_i, S_i, G_i, a_i in zip(self.X, W, self.S, G, a))   # can be parallelized
+            # W = Parallel(n_jobs=self.num_process)(delayed(self.calculate_W_i)(X_i, W_i, S_i, G_i, a_i, Z, XW, U)
+            #      for X_i, W_i, S_i, G_i, a_i in zip(self.X, W, self.S, G, a))   # can be parallelized
+
+            arguments = [(X_i, W_i, S_i, G_i, a_i, Z, XW, U)
+                         for X_i, W_i, S_i, G_i, a_i in zip(self.X, W, self.S, G, a)]
+            W = MP_POOL.starmap(self.calculate_W_i, arguments)
 
             # update XW
             XW = self.calculate_XW(self.X, W) # XW_(k+1)
@@ -149,6 +158,8 @@ class RSMVFS_multiprocess:
 
             if self.verbose:
                 print(f"[Iter {i:>3}] Error: {error: .4}")
+
+        return W, a
 
 class RSMVFS_local:
     def __init__(self, ):

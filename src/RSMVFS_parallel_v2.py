@@ -1,13 +1,25 @@
 import copy
+import multiprocessing as mp
+from threading import Thread
+
 import numpy as np
 
 INV = np.linalg.inv
 
+"""
 
-class RSMVFS:
+Considering the computational complexity of each method, 
+
+parallelize update W first
+
+then consider a
+
+"""
+
+class RSMVFS_multiprocess:
     def __init__(self, X, Y, Z, U, F, W,
                  lo=1, l1=10**-3, l2=10**-3, eps=10**-6, lo_max=10**6, eps_0=10**-3,
-                 verbose=True):
+                 num_process=1, verbose=True):
         self.X = X  # list of view matrix, [X1, X2, ..., Xv], Xv: [n, di]
         self.Y = Y  # [n, c]
         self.Z = Z  # [n, c]
@@ -32,6 +44,18 @@ class RSMVFS:
         self.n = Y.shape[0] # number of instances
         self.c = Y.shape[1] # number of class
         self.d = [x.shape[1] for x in X]    # [d1, d2, ..., dv]
+
+        if num_process > 1:
+            print(f"Distributed learning with {num_process} processes")
+            self.num_process = num_process
+            self.queue = [mp.Queue() for _ in range(num_process)]
+
+            # to handle with dynamic arguments, use queue as communication channel
+            # self.workers = [mp.Process(name=f"{i+1}", target=self.calculate_W_i, args=(self.queue[i], ))
+            #                 for i in range(num_process)]
+
+            self.workers = [Thread(name=f"{i+1}", target=self.calculate_W_i, args=(self.queue[i], ))
+                            for i in range(num_process)]
 
     def calculate_a(self, W: list, G):
         a = [
@@ -69,16 +93,18 @@ class RSMVFS:
     def calculate_XW(self, X, W):
         return np.mean([np.dot(X_i, W_i) for X_i, W_i in zip(X, W)], axis=0)
 
-    def calculate_W_i(self, X_i, W_i, S_i, G_i, a_i, Z, XW, U):
+    @staticmethod
+    def calculate_W_i(queue):
+        order, X_i, W_i, S_i, G_i, a_i, Z, XW, U, l1, lo, l2, result_queue = queue.get()
         XTX = np.dot(X_i.T, X_i)
-        term1 = (2*self.l1/a_i) * G_i + self.lo*XTX + self.l2*S_i
+        term1 = (2*l1/a_i) * G_i + lo*XTX + l2*S_i
         term2 = np.dot(X_i.T, Z) + np.dot(XTX, W_i) - np.dot(X_i.T, XW) - np.dot(X_i.T, U)\
 
-        W_next = self.lo * np.dot(INV(term1), term2)
-        return W_next
+        W_next = lo * np.dot(INV(term1), term2)
+        result_queue.put((order, W_next))
 
     def calculate_Z(self, F, Y, XW, U):
-        term1 = 2*self.v*F + self.lo*np.identity(self.n) # inverse of n x n matrix takes very long
+        term1 = 2*self.v*F + self.lo*np.identity(self.n)
         term2 = 2*self.v*np.dot(F, Y) + self.lo*XW + self.lo*U
         Z_next = np.dot(INV(term1), term2)
         return Z_next
@@ -104,6 +130,8 @@ class RSMVFS:
 
         error = float('inf')
         i = 0
+        result_queue = mp.Manager().Queue()
+        running_proc = []
 
         while error > self.eps_0:
             # calculate G_i for all W_i
@@ -113,8 +141,30 @@ class RSMVFS:
             a = self.calculate_a(W, G)  # can be parallelized
 
             # update W_i
-            W = [self.calculate_W_i(X_i, W_i, S_i, G_i, a_i, Z, XW, U)
-                 for X_i, W_i, S_i, G_i, a_i in zip(self.X, W, self.S, G, a)]   # can be parallelized
+            j = 0
+            for X_i, W_i, S_i, G_i, a_i in zip(self.X, W, self.S, G, a):
+                self.queue[j].put((j, X_i, W_i, S_i, G_i, a_i, Z, XW, U, self.l1, self.l2, self.lo, result_queue))
+                j += 1
+
+            if i ==0:
+                for p in self.workers:
+                    running_proc.append(p)
+                    p.start()
+
+            else:
+                for p in self.workers:
+                    running_proc.append(p)
+                    p.run()
+
+            for p in self.workers:
+                p.join()
+
+            while not result_queue.empty():
+                order, item = result_queue.get()
+                W[order] = item
+
+            # for p in self.workers:
+            #     p.kill()
 
             # update XW
             XW = self.calculate_XW(self.X, W) # XW_(k+1)
@@ -138,4 +188,10 @@ class RSMVFS:
             if self.verbose:
                 print(f"[Iter {i:>3}] Error: {error: .4}")
 
-        return W, a
+        return W
+
+class RSMVFS_W_i:
+    def __init__(self, X_i, Y):
+        self.X_i = X_i
+        self.Y = Y
+        pass

@@ -1,9 +1,10 @@
-from RSMVFS_v2 import RSMVFS
+from RSMVFS_parallel import RSMVFS_multiprocess
 import numpy as np
 from data_loader import get_data
 import sys
 import time
 import seaborn as sns
+import multiprocessing
 
 
 def debugger_is_active() -> bool:
@@ -32,13 +33,17 @@ def one_run(DATA):
     c = y.shape[1]
     v = len(X)
 
+    num_proc = min(v, multiprocessing.cpu_count())
+
     l1, l2, eps_0 = reg_value[DATA]
     W = [(10 ** -3) * np.eye(x.shape[1], y.shape[1]) for x in X]
     Z = np.zeros((n, c))
     U = np.zeros((n, c))
     F = np.zeros((n, n))
 
-    model = RSMVFS(X, y, Z, U, F, W, l1=l1, l2=l2, verbose=True, eps_0=eps_0)
+
+
+    model = RSMVFS_multiprocess(X, y, Z, U, F, W, l1=l1, l2=l2, num_process=num_proc, verbose=True, eps_0=eps_0)
     start = time.time()
     W, a = model.run()
     print(time.time() - start)
@@ -65,5 +70,3 @@ if __name__ == '__main__':
 
     for d in DATA:
         one_run(d)
-
-
