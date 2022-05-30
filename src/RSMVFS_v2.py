@@ -52,8 +52,9 @@ class RSMVFS:
         term = summation - Y
         norm = np.linalg.norm(term, axis=1) # calculate norm of each row
 
-        norm = np.where(norm <= self.eps, norm, 10**-10)
-        F = np.diag(norm)
+        off_indicies = np.where(norm > self.eps)
+        F = np.diag(0.5 * (1 / norm))
+        F[off_indicies, off_indicies] = 0
         return F
 
     def calculate_G_i(self, W_i, eps):
@@ -137,3 +138,5 @@ class RSMVFS:
 
             if self.verbose:
                 print(f"[Iter {i:>3}] Error: {error}")
+
+        return W

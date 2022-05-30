@@ -64,8 +64,8 @@ class RSMVFS_multiprocess:
         term = summation - Y
         norm = np.linalg.norm(term, axis=1) # calculate norm of each row
 
-        norm = np.where(norm <= self.eps, norm, 10**-10)
-        F = np.diag(norm)
+        norm = np.where(norm <= self.eps, norm, 10**-6) # loss capping process.
+        F = 0.5 * (1/np.diag(norm))
         return F
 
     def calculate_G_i(self, W_i, eps):
@@ -149,3 +149,7 @@ class RSMVFS_multiprocess:
 
             if self.verbose:
                 print(f"[Iter {i:>3}] Error: {error: .4}")
+
+class RSMVFS_local:
+    def __init__(self, ):
+        pass
