@@ -2,6 +2,7 @@ import copy
 import numpy as np
 
 INV = np.linalg.inv
+NORM = np.linalg.norm
 
 
 class RSMVFS:
@@ -25,7 +26,7 @@ class RSMVFS:
         # fixed values
         self.yTy = np.dot(Y.T, Y)
         self.y_chunk = np.linalg.multi_dot([Y, INV(self.yTy), Y.T])
-        self.S = [self.calculate_S_i(X_i) for X_i in X]
+        self.S = [self.calculate_S_i(X_i) for X_i in X] # Si: di x di
 
         # other variables
         self.v = len(X)     # number of views
@@ -94,6 +95,9 @@ class RSMVFS:
         error = np.linalg.norm(term, ord='fro')
         return error, W
 
+    def norm(self, a):
+        return np.linalg.norm(a, ord="fro")
+
     def run(self, eps=10**-6):
         # initial set up
         W = self.W
@@ -103,7 +107,7 @@ class RSMVFS:
         prev_W = copy.deepcopy(W)
 
         error = float('inf')
-        i = 0
+        iter = 1
 
         while error > self.eps_0:
             # calculate G_i for all W_i
@@ -133,9 +137,9 @@ class RSMVFS:
 
             self.lo = min(self.lo*1.1, self.lo_max)
 
-            i += 1
-
             if self.verbose:
-                print(f"[Iter {i:>3}] Error: {error: .4}")
+                print(f"[Iter {iter:>3}] Error: {error: .6}, Z: {self.norm(Z): .6}, U = {self.norm(U): .6}")
+
+            iter += 1
 
         return W, a

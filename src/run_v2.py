@@ -26,7 +26,8 @@ def auto_calculate_configs(X, y):
 
 def one_run(DATA):
     X, y = get_data(DATA)
-    reg_value = {"ad": (10 ** -2, 10 ** -3, 10**-50), "MF": (10 ** -2, 10 ** -2, 10**-3)}
+    reg_value = {"ad": (10 ** -2, 10 ** -3, 10**-50), "MF": (10 ** -2, 10 ** -2, 10**-3),
+                 "sample": (10 ** -2, 10 ** -2, 10**-50)}
 
     n = y.shape[0]
     c = y.shape[1]
@@ -62,7 +63,7 @@ def one_run(DATA):
 if __name__ == '__main__':
 
     DATA = ["MF", "ad"]
-
+    # DATA = ["sample"]
     for d in DATA:
         one_run(d)
 
