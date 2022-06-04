@@ -1,5 +1,5 @@
 from RSMVFS_v2 import RSMVFS
-import numpy as np
+import cupy as np
 from data_loader import get_data
 import sys
 import time
@@ -55,7 +55,7 @@ def one_run(DATA):
 
     for i, w in enumerate(W):
         fig = plt.figure()
-        ax = sns.heatmap(w)
+        ax = sns.heatmap(w.get())
         plt.figure(tight_layout=True)
 
         fig.savefig(path + f"W_{i}.jpg")
