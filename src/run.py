@@ -1,4 +1,4 @@
-from RSMVFS import RSMVFS
+from RSMVFS_GPU import RSMVFS
 import cupy as np
 from data_loader import get_data
 import sys

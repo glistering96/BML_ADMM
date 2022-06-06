@@ -6,7 +6,7 @@ NORM = np.linalg.norm
 
 
 class RSMVFS:
-    def __init__(self, X, Y: np.ndarray, Z, U, F, W,
+    def __init__(self, X, Y, Z, U, F, W,
                  lo=1, l1=10**-3, l2=10**-3, eps=10**-6, lo_max=10**6, eps_0=10**-3,
                  verbose=True):
         self.X = X  # list of view matrix, [X1, X2, ..., Xv], Xv: [n, di]
@@ -25,9 +25,8 @@ class RSMVFS:
 
         # fixed values
         self.yTy = np.dot(Y.T, Y)
-        self.y_chunk = Y.dot(self.yTy).dot(Y.T)
+        self.y_chunk = Y.dot(INV(self.yTy).dot(Y.T))
         self.S = [self.calculate_S_i(X_i) for X_i in X] # Si: di x di
-        self.XTX = [np.dot(Xi.T, Xi) for Xi in X]
 
         # other variables
         self.v = len(X)     # number of views
@@ -40,9 +39,9 @@ class RSMVFS:
             np.sqrt(
                 np.trace(
                     np.dot(W_i.T, G_i).dot(W_i)
-                )
-            ) for W_i, G_i in zip(W, G)
-        ]
+                    )
+                ) for W_i, G_i in zip(W, G)
+            ]
 
         total = np.sum(np.array(a))
         return np.array(a) / total
@@ -51,9 +50,9 @@ class RSMVFS:
         chi_iq_W_i = np.array([np.dot(X_i, W_i) for X_i, W_i in zip(X, W)])
         summation = np.sum(chi_iq_W_i)
         term = summation - Y
-        norm = np.linalg.norm(term, ord=2, axis=1) # calculate norm of each row
+        norm = np.linalg.norm(term, axis=1) # calculate norm of each row
 
-        off_indicies = np.where(np.array(norm > self.eps))
+        off_indicies = np.where(norm > self.eps)
         F = np.diag(0.5 * (1 / norm))
         F[off_indicies, off_indicies] = 0
         return F
@@ -69,16 +68,13 @@ class RSMVFS:
         return S_i
 
     def calculate_XW(self, X, W):
-        result = np.zeros((X[0].shape[0], W[0].shape[1]))
+        return np.mean(np.array([np.dot(X_i, W_i) for X_i, W_i in zip(X, W)]), axis=0)
 
-        for Xi, Wi in zip(X, W):
-            result += np.dot(Xi, Wi)
+    def calculate_W_i(self, X_i, W_i, S_i, G_i, a_i, Z, XW, U):
+        XTX = np.dot(X_i.T, X_i)
+        term1 = (2*self.l1/a_i) * G_i + self.lo*XTX + self.l2*S_i
+        term2 = np.dot(X_i.T, Z) + np.dot(XTX, W_i) - np.dot(X_i.T, XW) - np.dot(X_i.T, U)\
 
-        return result / len(X)
-
-    def calculate_W_i(self, i, X_i, W_i, S_i, G_i, a_i, Z, XW, U):
-        term1 = (2*self.l1/a_i) * G_i + self.lo*self.XTX[i] + self.l2*S_i
-        term2 = np.dot(X_i.T, Z) + np.dot(self.XTX[i], W_i) - np.dot(X_i.T, XW) - np.dot(X_i.T, U)
         W_next = self.lo * np.dot(INV(term1), term2)
         return W_next
 
@@ -121,8 +117,8 @@ class RSMVFS:
             a = self.calculate_a(W, G)  # can be parallelized
 
             # update W_i
-            W = [self.calculate_W_i(i, X_i, W_i, S_i, G_i, a_i, Z, XW, U)
-                 for i, X_i, W_i, S_i, G_i, a_i in zip(range(self.v), self.X, W, self.S, G, a)]   # can be parallelized
+            W = [self.calculate_W_i(X_i, W_i, S_i, G_i, a_i, Z, XW, U)
+                 for X_i, W_i, S_i, G_i, a_i in zip(self.X, W, self.S, G, a)]   # can be parallelized
 
             # update XW
             XW = self.calculate_XW(self.X, W) # XW_(k+1)
