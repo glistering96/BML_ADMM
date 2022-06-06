@@ -4,16 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="53a3120f-5b99-4065-a6b0-d2dbd7f2e754" name="Changes" comment="fixed F update">
-      <change afterPath="$PROJECT_DIR$/src/RSMVFS_parallel_v2.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/data_loader.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/image_preprocess.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/run_v2_parallel.py" afterDir="false" />
+    <list default="true" id="53a3120f-5b99-4065-a6b0-d2dbd7f2e754" name="Changes" comment="organized files">
+      <change afterPath="$PROJECT_DIR$/src/RSMVFS_CPU.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/Untitled.ipynb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Experiements.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/src/Experiements.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/RSMVFS_parallel.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/RSMVFS_parallel.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/RSMVFS_v2.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/RSMVFS_v2.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/run_v2.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/run_v2.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.ipynb_checkpoints/Untitled-checkpoint.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/.ipynb_checkpoints/Untitled-checkpoint.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Untitled.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/RSMVFS.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/RSMVFS_GPU.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/run.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/run.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -28,10 +26,12 @@
     </option>
   </component>
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="master" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
-  </component>
-  <component name="MarkdownSettingsMigration">
-    <option name="stateVersion" value="1" />
   </component>
   <component name="ProjectId" id="29NDpkKLqNfJeEqQe3PVcijgHaj" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
@@ -39,27 +39,25 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/PycharmProjects/BML_ADMM/src&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
-  }
-}</component>
+  <component name="PropertiesComponent">
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/src/data_loader.py" />
+    <property name="node.js.detected.package.eslint" value="true" />
+    <property name="node.js.detected.package.tslint" value="true" />
+    <property name="node.js.selected.package.eslint" value="(autodetect)" />
+    <property name="node.js.selected.package.tslint" value="(autodetect)" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
+  </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
-      <recent name="D:\PycharmProjects\BML_ADMM\src" />
-      <recent name="C:\Users\admin\PycharmProjects\BML_ADMM\src" />
+      <recent name="C:\Users\kshma\PycharmProjects\BML_ADMM\src" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\kshma\PycharmProjects\BML_ADMM\src" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.run_v2_parallel">
-    <configuration name="RSMVFS_v2" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+  <component name="RunManager" selected="Python.run">
+    <configuration name="RSMVFS_GPU" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="BML_ADMM" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -72,7 +70,7 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/RSMVFS_v2.py" />
+      <option name="SCRIPT_NAME" value="C:\Users\kshma\PycharmProjects\BML_ADMM\src\RSMVFS_GPU.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -81,20 +79,20 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="image_preprocess" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="data_loader.py" type="PythonConfigurationType" factoryName="Python">
       <module name="BML_ADMM" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <envs>
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
-      <option name="SDK_HOME" value="" />
+      <option name="SDK_HOME" value="C:\Users\kshma\AppData\Local\Programs\Python\Python39\python.exe" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src" />
-      <option name="IS_MODULE_SDK" value="true" />
+      <option name="IS_MODULE_SDK" value="false" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/image_preprocess.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/data_loader.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -125,7 +123,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="run_v2" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="run" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="BML_ADMM" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -138,7 +136,7 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/run_v2.py" />
+      <option name="SCRIPT_NAME" value="C:\Users\kshma\PycharmProjects\BML_ADMM\src\run.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -147,35 +145,15 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="run_v2_parallel" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="BML_ADMM" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/run_v2_parallel.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
+    <list>
+      <item itemvalue="Python.data_loader.py" />
+      <item itemvalue="Python.run" />
+      <item itemvalue="Python.RSMVFS_GPU" />
+    </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.run_v2_parallel" />
-        <item itemvalue="Python.run_v2" />
-        <item itemvalue="Python.image_preprocess" />
-        <item itemvalue="Python.RSMVFS_v2" />
         <item itemvalue="Python.run" />
+        <item itemvalue="Python.RSMVFS_GPU" />
       </list>
     </recent_temporary>
   </component>
@@ -189,9 +167,12 @@
       <updated>1652944837075</updated>
       <workItem from="1652944839779" duration="9543000" />
       <workItem from="1653310221366" duration="2561000" />
-      <workItem from="1653877447155" duration="6940000" />
-      <workItem from="1653887272706" duration="10479000" />
-      <workItem from="1653902032092" duration="1123000" />
+      <workItem from="1653922500507" duration="435000" />
+      <workItem from="1654002340337" duration="2782000" />
+      <workItem from="1654074232258" duration="14834000" />
+      <workItem from="1654305779893" duration="9468000" />
+      <workItem from="1654422601736" duration="1243000" />
+      <workItem from="1654516618083" duration="404000" />
     </task>
     <task id="LOCAL-00001" summary="done update_W">
       <created>1652957165640</created>
@@ -249,35 +230,21 @@
       <option name="project" value="LOCAL" />
       <updated>1653402255899</updated>
     </task>
-    <task id="LOCAL-00009" summary="v2 fixed">
-      <created>1653448578495</created>
+    <task id="LOCAL-00009" summary="version 2 added">
+      <created>1653402292941</created>
       <option name="number" value="00009" />
       <option name="presentableId" value="LOCAL-00009" />
       <option name="project" value="LOCAL" />
-      <updated>1653448578495</updated>
+      <updated>1653402292941</updated>
     </task>
-    <task id="LOCAL-00010" summary="start on parallel version">
-      <created>1653449168643</created>
+    <task id="LOCAL-00010" summary="organized files">
+      <created>1654516951275</created>
       <option name="number" value="00010" />
       <option name="presentableId" value="LOCAL-00010" />
       <option name="project" value="LOCAL" />
-      <updated>1653449168643</updated>
+      <updated>1654516951275</updated>
     </task>
-    <task id="LOCAL-00011" summary="parallel done with joblib">
-      <created>1653450915490</created>
-      <option name="number" value="00011" />
-      <option name="presentableId" value="LOCAL-00011" />
-      <option name="project" value="LOCAL" />
-      <updated>1653450915490</updated>
-    </task>
-    <task id="LOCAL-00012" summary="fixed F update">
-      <created>1653881473720</created>
-      <option name="number" value="00012" />
-      <option name="presentableId" value="LOCAL-00012" />
-      <option name="project" value="LOCAL" />
-      <updated>1653881473720</updated>
-    </task>
-    <option name="localTasksCounter" value="13" />
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -305,6 +272,7 @@
         </entry>
       </map>
     </option>
+    <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="VcsManagerConfiguration">
     <option name="CHECK_NEW_TODO" value="false" />
@@ -314,24 +282,16 @@
     <MESSAGE value="fixed various equations" />
     <MESSAGE value="S_i modified to calculate once" />
     <MESSAGE value="version 2 added" />
-    <MESSAGE value="v2 fixed" />
-    <MESSAGE value="start on parallel version" />
-    <MESSAGE value="parallel done with joblib" />
-    <MESSAGE value="fixed F update" />
-    <option name="LAST_COMMIT_MESSAGE" value="fixed F update" />
+    <MESSAGE value="organized files" />
+    <option name="LAST_COMMIT_MESSAGE" value="organized files" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/src/image_preprocess.py</url>
-          <line>15</line>
-          <option name="timeStamp" value="69" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/src/RSMVFS_v2.py</url>
-          <line>107</line>
-          <option name="timeStamp" value="72" />
+          <url>file://$PROJECT_DIR$/src/RSMVFS_GPU.py</url>
+          <line>55</line>
+          <option name="timeStamp" value="77" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
@@ -344,29 +304,24 @@
     </breakpoint-manager>
     <watches-manager>
       <configuration name="PythonConfigurationType">
-        <watch expression="self.X" language="Python" />
-        <watch expression="X" language="Python" />
-        <watch expression="self.G_i" language="Python" />
-        <watch expression="self.config.eps" language="Python" />
-        <watch expression="self.local_models[5].W_i" language="Python" />
+        <watch expression="Z" language="Python" />
+        <watch expression="U" language="Python" />
+        <watch expression="XW" language="Python" />
+        <watch expression="np.array_equal(Z, XW)" language="Python" />
         <watch expression="F" language="Python" />
-        <watch expression="self.local_models[5].G_i" language="Python" />
-        <watch expression="self.F" language="Python" />
-        <watch expression="self.prev_W" language="Python" />
-        <watch expression="self.W_i" language="Python" />
-        <watch expression="self.S_i" language="Python" />
-        <watch expression="self.queue" language="Python" />
-        <watch expression="self.workers" language="Python" />
-        <watch expression="print(result_queue)" language="Python" />
+        <watch expression="term1" language="Python" />
+        <watch expression="norm.get)_" language="Python" />
+        <watch expression="norm.get()" language="Python" />
       </configuration>
     </watches-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/BML_ADMM$run.coverage" NAME="run 커버리지 결과" MODIFIED="1653448149370" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
-    <SUITE FILE_PATH="coverage/BML_ADMM$RSMVFS_v2.coverage" NAME="RSMVFS_v2 커버리지 결과" MODIFIED="1653881378100" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
     <SUITE FILE_PATH="coverage/BML_ADMM$image_preprocess.coverage" NAME="image_preprocess 커버리지 결과" MODIFIED="1653893399621" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
-    <SUITE FILE_PATH="coverage/BML_ADMM$run_v2.coverage" NAME="run_v2 커버리지 결과" MODIFIED="1653902936782" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
-    <SUITE FILE_PATH="coverage/BML_ADMM$run_v2_parallel.coverage" NAME="run_v2_parallel 커버리지 결과" MODIFIED="1653903103037" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
+    <SUITE FILE_PATH="coverage/BML_ADMM$run.coverage" NAME="run Coverage Results" MODIFIED="1654517868254" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
     <SUITE FILE_PATH="coverage/BML_ADMM$RSMVFS.coverage" NAME="RSMVFS 커버리지 결과" MODIFIED="1653369698033" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
+    <SUITE FILE_PATH="coverage/BML_ADMM$RSMVFS_v2.coverage" NAME="RSMVFS_v2 커버리지 결과" MODIFIED="1653881378100" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
+    <SUITE FILE_PATH="coverage/BML_ADMM$data_loader_py.coverage" NAME="data_loader.py Coverage Results" MODIFIED="1654331307424" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
+    <SUITE FILE_PATH="coverage/BML_ADMM$run_v2.coverage" NAME="run_v2 Coverage Results" MODIFIED="1654517231833" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
+    <SUITE FILE_PATH="coverage/BML_ADMM$run_v2_parallel.coverage" NAME="run_v2_parallel 커버리지 결과" MODIFIED="1653903103037" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
   </component>
 </project>

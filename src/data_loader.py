@@ -1,4 +1,4 @@
-import numpy as np
+import cupy as np
 
 
 def get_data(name):
@@ -23,7 +23,7 @@ def get_data(name):
 def _load_MF(DATA_ROOT):
     X_i = {"mfeat-" + x: None for x in ["fou", "fac", "kar", "mor", "pix", "zer"]}
 
-    a = np.repeat(range(10), 200)
+    a = np.repeat(np.array(range(10)), 200)
     label = np.zeros((a.shape[0], 10))
     label[np.arange(a.size), a] = 1
 
@@ -57,13 +57,16 @@ def _load_sample(DATA_ROOT):
     Y = np.loadtxt(DATA_ROOT + "Y.csv", delimiter=",")
 
     return X, Y
+
 def create_sample():
     DATA_ROOT = "../data/sample/"
-    n = 200
-    c = 4
-    d = [60, 40, 40, 60, 50]
+    n = 5000
+    c = 10
+    d = [3700, 4000, 3400, 3200, 2500, 3000]
 
-    a = np.repeat(range(4), 50)
+    import numpy as np
+
+    a = np.repeat(range(c), n // c)
     label = np.zeros((a.shape[0], c))
     label[np.arange(a.size), a] = 1
 
