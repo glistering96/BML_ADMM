@@ -1,228 +1,149 @@
-import numpy as np
+import copy
+import cupy as np
+
+INV = np.linalg.inv
+NORM = np.linalg.norm
 
 
-class RSMVFConfig:
-    def __init__(self, num_view, num_class, num_instances, num_total_features, lambda1, lambda2,
-                 eps=10**-6, converge_condition=10**-3, lo=1, lo_max=10**6):
-        """
-        :param num_view: number of total view in the whole dataset
-        :param num_class: number of target class
-        :param num_instances: number of instances
-        :param lambda1: regularization param 1
-        :param lambda2: regularization param 2
-        :param eps:
-        :param converge_condition: convergence limit
-        :param lo: lo parameter for scaled LM
-        :param lo_max: maximum bound for lo
+class RSMVFS:
+    def __init__(self, X, Y: np.ndarray, Z, U, F, W,
+                 lo=1, l1=10**-3, l2=10**-3, eps=10**-6, lo_max=10**6, eps_0=10**-3,
+                 verbose=True):
+        self.X = X  # list of view matrix, [X1, X2, ..., Xv], Xv: [n, di]
+        self.Y = Y  # [n, c]
+        self.Z = Z  # [n, c]
+        self.U = U  # [n, c]
+        self.F = F  # [n, n]
+        self.W = W  # [W1, W2, ..., Wv], Wv: [di, c]
+        self.lo = lo # lo value, scalar
+        self.l1 = l1    # lambda1
+        self.l2 = l2    # lambda2
+        self.eps = eps  # eps
+        self.eps_0 = eps_0  # convergence threshold
+        self.lo_max = lo_max    # maximum lo
+        self.verbose = verbose
 
-        """
-        self.v = num_view
-        self.c = num_class
-        self.n = num_instances
-        self.d = num_total_features
+        # fixed values
+        self.yTy = np.dot(Y.T, Y)
+        self.y_chunk = Y.dot(self.yTy).dot(Y.T)
+        self.S = [self.calculate_S_i(X_i) for X_i in X] # Si: di x di
+        self.XTX = [np.dot(Xi.T, Xi) for Xi in X]
 
-        self.lo = lo
-        self.lo_max = lo_max
-        self.lambda1 = lambda1
-        self.lambda2 = lambda2
-        self.eps = eps
-        self.converge_condition = converge_condition
+        # other variables
+        self.v = len(X)     # number of views
+        self.n = Y.shape[0] # number of instances
+        self.c = Y.shape[1] # number of class
+        self.d = [x.shape[1] for x in X]    # [d1, d2, ..., dv]
 
+    def calculate_a(self, W: list, G):
+        a = np.zeros(len(W))
+        i = 0
 
-class RSMVFSGlobal:
-    def __init__(self, X: list, y, Z_init=None, U_init=None, F_init=None, **config):
-        """
-        :param X: list of view matrix
-        :param W_init: initial value of W
-        :param Z_init: initial value of Z
-        :param U_init: initial value of U
-        :param F_init: initial value of F
+        for Wi, Gi in zip(W, G):
+            temp = Wi.T.dot(Gi).dot(Wi)
+            a[i] = np.sqrt(np.trace(temp))
+            i += 1
 
-        If initial value is None, initialize with given paper value
+        total = np.sum(a)
+        return a / total
 
-        """
+    def calculate_F(self, X, W, Y):
+        chi_iq_W_i = np.array([np.dot(X_i, W_i) for X_i, W_i in zip(X, W)])
+        summation = np.sum(chi_iq_W_i)
+        term = summation - Y
+        norm = np.linalg.norm(term, ord=2, axis=1) # calculate norm of each row
 
-        self.X = X # list of view matrix
-        self.y = y
-        self.config = RSMVFConfig(**config)
+        off_indicies = np.where(np.array(norm > self.eps))
+        F = np.diag(0.5 * (1 / norm))
+        F[off_indicies, off_indicies] = 0
+        return F
 
-        # global variables
+    def calculate_G_i(self, W_i, eps):
+        diag = 1 / (np.linalg.norm(W_i, axis=1) + eps)
+        return np.diag(diag)
 
-        # number of features of each view
-        self.d_i_list = [d.shape[1] for d in self.X]
-
-        # local models list
-        # v개 만큼의 local model hold
-        self.local_models = [
-            RSMVFSLocal(self.X[i], y, self.d_i_list[i],  **config)
-            for i in range(self.config.v)
-        ]
-
-        # W_init=self._xavier_init(self.X[i].shape[1], y.shape[1]),
-
-        # a_i, the importance scalar for each view
-        self.a_i_list = [1/self.config.v for _ in range(self.config.v)]
-
-        # initialize matrix
-        self.Z = np.zeros((self.config.n, self.config.c)) if Z_init is None else Z_init # (n, c)
-        self.U = np.zeros((self.config.n, self.config.c)) if U_init is None else U_init # (n, c)
-        self.F = np.zeros((self.config.n, self.config.n)) if F_init is None else F_init # (n, n)
-        self.U = np.zeros((self.config.n, self.config.c)) # (n, c)
-
-        # prev_value
-        self.prev_W = np.zeros((self.config.d, self.config.c))
-        self.prev_Z = np.copy(self.Z)
-        self.prev_U = np.copy(self.U)
-        self.prev_F = np.copy(self.F)
-
-    def _xavier_init(self, n, c):
-        scale = 1 / max(1., (2 + 2) / 2.)
-        limit = np.sqrt(3.0 * scale)
-        weights = np.random.uniform(-limit, limit, size=(n, c))
-        return weights
-
-    def run(self):
-        error = float('inf')
-        iter = 0
-
-        while error > self.config.converge_condition:
-            iter += 1
-            XW = np.mean([np.dot(m.X_i, m.W_i) for m in self.local_models], axis=0)
-
-            for i, m in enumerate(self.local_models):
-                m.update_W(self.a_i_list[i], self.Z, XW, self.U)
-
-            self._update_a_i(self.local_models)
-            F = self._update_F(self.local_models, self.y)
-            Z = self._update_Z(F, self.y, XW, self.U)
-            U = self._update_U(self.U, XW, Z)
-
-            e_W, e_U, e_Z, e_F = self._update_error(F=F, Z=Z, U=U)
-            Z_norm = np.linalg.norm(Z)
-            U_norm = np.linalg.norm(U)
-
-            self.config.lo = min(1.1*self.config.lo, self.config.lo_max)
-
-            print(f"Iter {iter}: norm of W: {e_W}, norm of Z: {e_Z}, norm of U: {e_U}, norm of F: {e_F}, a: {self.a_i_list}")
-
-        return [m.W_i for m in self.local_models]
-
-    def _update_F(self, local_models, y):
-        # X dot W_i for every view and sum up
-        summation = np.sum([np.dot(m.X_i, m.W_i) for i, m in enumerate(local_models)], axis=0)
-
-        # summation - y
-        norm = np.linalg.norm((summation - y), ord=2, axis=1)
-        threshold = 10**6
-        # norm = np.where(norm <= threshold, norm, self.config.eps)
-        self.F = np.diag(0.5 * norm**-1)
-        return self.F
-
-    def _update_a_i(self, local_models):
-        """ Must be called after updating W_i
-            works as inplace method
-         """
-        W_norms = [
-            np.sqrt(
-            np.trace(np.linalg.multi_dot([m.W_i.T, m.G_i, m.W_i])))
-            for m in local_models
-        ] # Between eq. 19 and 20
-        total_W_norm = np.sum(W_norms) + self.config.eps
-
-        self.a_i_list = W_norms / total_W_norm
-        return self.a_i_list
-
-    def _update_Z(self, F, y, XW, U):
-        # eq 25
-        v = self.config.v
-        lo = self.config.lo
-
-        term1 = np.linalg.inv(2*v*F + lo*np.identity(F.shape[0]))
-        term2 = 2*v*np.dot(F, y) + lo*XW + lo*U
-
-        self.Z = np.dot(np.linalg.inv(term1), term2)
-        return self.Z
-
-    def _update_U(self, U, XW, Z):
-        self.U = U + XW - Z
-        return self.U
-
-    def _update_error(self, F=None, U=None, Z=None):
-        W = np.concatenate([m.W_i for m in self.local_models], axis=0) # equals to np.vstack, current W
-
-        # TODO: Meaning of || W ||_F ?
-        error_norm = np.linalg.norm(W - self.prev_W, ord='fro')**2
-        error_U = np.linalg.norm(U - self.prev_U, ord='fro') ** 2
-        error_Z = np.linalg.norm(Z - self.prev_Z, ord='fro') ** 2
-        error_F = np.linalg.norm(F - self.prev_F, ord='fro') ** 2
-
-        self.prev_W = W
-        self.prev_F = F if F is not None else None
-        self.prev_U = U if U is not None else None
-        self.prev_Z = Z if Z is not None else None
-
-        return error_norm, error_U, error_Z, error_F
-
-
-class RSMVFSLocal:
-    """
-    Responsible for calculating primal W_i
-    All data related w.r.t. view i are implemented
-
-    """
-    def __init__(self, X_i, y, di, W_init=None, **config):
-        # fixed
-        self.config = RSMVFConfig(**config)
-        self.X_i = X_i # (n, di)
-        self.y = y # (n, c)
-        self.X_T_X = np.dot(X_i.T, X_i)
-
-        self.yTy_inv = np.linalg.inv(np.dot(self.y.T, self.y))
-        self.y_chunk = np.linalg.multi_dot([self.y, self.yTy_inv, self.y.T])
-
-        self.S_i = self._calculate_S()
-
-        # learnable
-        # self.W_i = (10 **-3) * np.eye(di, self.config.c) if W_init is None else W_init # (di, c)
-        self.W_i = (10 ** -6) * np.eye(di, self.config.c) if W_init is None else W_init  # (di, c)
-        self.G_i = None # (di, di)
-
-    def compute_G(self, W_i):
-        # TODO: G_i의 매트릭스 shape이 어떻게 되먹은건가. 논문에서는 c X c라 되어 있는데 그러면 계산이 안됨.
-        diag_elem = 1 / (np.linalg.norm(W_i, ord=2, axis=1) + 10**-6)
-        G_i = np.diag(diag_elem) # (di, di)
-        return G_i
-
-    def update_W(self, a_i, Z, XW, U):
-        # equation 23
-        l1, l2, lo = self.config.lambda1, self.config.lambda2, self.config.lo
-
-        # S_i = self._update_S_i(a_i)
-        S_i = self.S_i
-        X_i = self.X_i
-        W_i = self.W_i
-
-        G_i = self.compute_G(W_i) # first line in Algorithm 1.
-
-        term_1 = (2 * l1 / a_i) * G_i + lo * self.X_T_X + l2 * S_i
-
-        term_2 = np.dot(X_i.T, Z) + np.dot(self.X_T_X, W_i) - np.dot(X_i.T, XW) - np.dot(X_i.T, U)
-
-
-        try:
-            W_i = lo * np.dot(np.linalg.inv(term_1), term_2)
-        
-        except np.linalg.LinAlgError: # 가끔 term_1이  singular matrix가 되어서 역행렬 불가능할 때 psuedo-inverse 적용
-            W_i = lo * np.dot(np.linalg.pinv(term_1), term_2)
-
-        self.G_i = G_i
-        self.W_i = W_i
-        return W_i
-
-    def _calculate_S(self):
-        S_b = np.linalg.multi_dot([self.X_i.T, self.y_chunk, self.X_i])  # eq 6
-        I_y = np.identity(self.config.n) - self.y_chunk
-
-        S_w = np.linalg.multi_dot([self.X_i.T, I_y, self.X_i])  # eq 7
-        S_i = S_w - S_b # independent of a_i
+    def calculate_S_i(self, X_i):
+        # with eq 6, 7, and 10, S_i = np.dot(X.T, X) - 2*S_b
+        S_b = X_i.T.dot(self.y_chunk).dot(X_i)
+        S_i = np.dot(X_i.T, X_i) - 2 * S_b
         return S_i
+
+    def calculate_XW(self, X, W):
+        result = np.zeros((X[0].shape[0], W[0].shape[1]))
+
+        for Xi, Wi in zip(X, W):
+            result += np.dot(Xi, Wi)
+
+        return result / len(X)
+
+    def calculate_W_i(self, i, X_i, W_i, S_i, G_i, a_i, Z, XW, U):
+        term1 = (2*self.l1/a_i) * G_i + self.lo*self.XTX[i] + self.l2*S_i
+        term2 = np.dot(X_i.T, Z) + np.dot(self.XTX[i], W_i) - np.dot(X_i.T, XW) - np.dot(X_i.T, U)
+        W_next = self.lo * np.dot(INV(term1), term2)
+        return W_next
+
+    def calculate_Z(self, F, Y, XW, U):
+        term1 = 2*self.v*F + self.lo*np.identity(self.n) # inverse of n x n matrix takes very long
+        term2 = 2*self.v*np.dot(F, Y) + self.lo*XW + self.lo*U
+        Z_next = np.dot(INV(term1), term2)
+        return Z_next
+
+    def update_U(self, U, XW, Z):
+        U_next = U + XW - Z
+        return U_next
+
+    def calculate_error(self, prev_W, W):
+        all_W_prev = np.concatenate(prev_W)
+        all_W = np.concatenate(W)
+        term = all_W - all_W_prev
+        error = np.linalg.norm(term, ord='fro')
+        return error, W
+
+    def norm(self, a):
+        return np.linalg.norm(a, ord="fro")
+
+    def run(self, eps=10**-6):
+        # initial set up
+        W = self.W
+        Z = self.Z
+        U = self.U
+        XW = self.calculate_XW(self.X, W) # XW_k
+        prev_W = copy.deepcopy(W)
+
+        error = float('inf')
+        iter = 1
+
+        while error > self.eps_0:
+            # calculate G_i for all W_i
+            G = [self.calculate_G_i(W_i, eps) for W_i in W]     # can be parallelized
+
+            # calculate a_i for all view
+            a = self.calculate_a(W, G)  # can be parallelized
+
+            # update W_i
+            W = [self.calculate_W_i(i, X_i, W_i, S_i, G_i, a_i, Z, XW, U)
+                 for i, X_i, W_i, S_i, G_i, a_i in zip(range(self.v), self.X, W, self.S, G, a)]   # can be parallelized
+
+            # update XW
+            XW = self.calculate_XW(self.X, W) # XW_(k+1)
+
+            # calculate F
+            F = self.calculate_F(self.X, W, self.Y)
+
+            # calculate Z
+            Z = self.calculate_Z(F, self.Y, XW, U)
+
+            # calculate U
+            U = self.update_U(U, XW, Z)
+
+            # calculate error
+            error, prev_W = self.calculate_error(prev_W, W)
+
+            self.lo = min(self.lo*1.1, self.lo_max)
+
+            if self.verbose:
+                print(f"[Iter {iter:>3}] Error: {error: .6}, Z: {self.norm(Z): .6}, U = {self.norm(U): .6}")
+
+            iter += 1
+
+        return W, a
