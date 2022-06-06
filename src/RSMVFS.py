@@ -36,16 +36,16 @@ class RSMVFS:
         self.d = [x.shape[1] for x in X]    # [d1, d2, ..., dv]
 
     def calculate_a(self, W: list, G):
-        a = np.zeros(len(W))
-        i = 0
+        a = [
+            np.sqrt(
+                np.trace(
+                    np.dot(W_i.T, G_i).dot(W_i)
+                )
+            ) for W_i, G_i in zip(W, G)
+        ]
 
-        for Wi, Gi in zip(W, G):
-            temp = Wi.T.dot(Gi).dot(Wi)
-            a[i] = np.sqrt(np.trace(temp))
-            i += 1
-
-        total = np.sum(a)
-        return a / total
+        total = np.sum(np.array(a))
+        return np.array(a) / total
 
     def calculate_F(self, X, W, Y):
         chi_iq_W_i = np.array([np.dot(X_i, W_i) for X_i, W_i in zip(X, W)])

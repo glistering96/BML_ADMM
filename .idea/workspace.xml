@@ -4,14 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="53a3120f-5b99-4065-a6b0-d2dbd7f2e754" name="Changes" comment="cupy going wrong">
+    <list default="true" id="53a3120f-5b99-4065-a6b0-d2dbd7f2e754" name="Changes" comment="organized files">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Untitled.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/Untitled.ipynb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/RSMVFS.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/RSMVFS.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/RSMVFS_v2.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/run.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/run.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/run_v2.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/run_v2_parallel.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/run_parallel.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -164,7 +159,7 @@
       <workItem from="1654074232258" duration="14834000" />
       <workItem from="1654305779893" duration="9468000" />
       <workItem from="1654422601736" duration="1243000" />
-      <workItem from="1654516618083" duration="303000" />
+      <workItem from="1654516618083" duration="404000" />
     </task>
     <task id="LOCAL-00001" summary="done update_W">
       <created>1652957165640</created>
@@ -229,7 +224,14 @@
       <option name="project" value="LOCAL" />
       <updated>1653402292941</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="organized files">
+      <created>1654516951275</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1654516951275</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -267,7 +269,8 @@
     <MESSAGE value="fixed various equations" />
     <MESSAGE value="S_i modified to calculate once" />
     <MESSAGE value="version 2 added" />
-    <option name="LAST_COMMIT_MESSAGE" value="version 2 added" />
+    <MESSAGE value="organized files" />
+    <option name="LAST_COMMIT_MESSAGE" value="organized files" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
